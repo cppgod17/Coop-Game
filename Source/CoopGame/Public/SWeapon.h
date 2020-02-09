@@ -26,7 +26,7 @@ protected:
 	USkeletalMeshComponent* MeshComp = nullptr;
 
 	UFUNCTION(BlueprintCallable,Category = "Weapon")
-	void Fire();
+	virtual void Fire();
 
 	UPROPERTY(EditDefaultsOnly,BlueprintReadOnly,Category = "Weapon")
 	TSubclassOf<UDamageType> DamageType;
@@ -34,11 +34,17 @@ protected:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	FName MuzzleSocketName;
 
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+	FName TraceTargetName;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	UParticleSystem* MuzzleEffect;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
 	UParticleSystem* ImpactEffect;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Weapon")
+	UParticleSystem* TracerEffect;
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

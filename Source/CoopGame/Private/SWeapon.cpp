@@ -6,6 +6,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Particles/ParticleSystem.h"
 #include "Particles/ParticleSystemComponent.h"
+#include "PhysicalMaterials/PhysicalMaterial.h"
+#include "CoopGame.h"
 
 static int32 DebugWeaponDrawing = 0;
 FAutoConsoleVariableRef CVARDebugWeaponDrawing(TEXT("COOP.DebugWeapons"),
@@ -46,6 +48,7 @@ void ASWeapon::Fire()
 		QueryParams.AddIgnoredActor(MyOwner);
 		QueryParams.AddIgnoredActor(this);
 		QueryParams.bTraceComplex = true;
+		QueryParams.bReturnPhysicalMaterial = true;
 
 		//Цель куда идет партикл
 		FVector TracerEndPoint = TraceEnd;
@@ -56,10 +59,27 @@ void ASWeapon::Fire()
 			// если попали, то обрабатываем урон, функция возвращает булевое значение
 			AActor* HitActor = Hitresult.GetActor();
 			UGameplayStatics::ApplyPointDamage(HitActor, 20.0f, ShotDirection, Hitresult, MyOwner->GetInstigatorController(), this, DamageType);
-			if (ImpactEffect)
+
+			EPhysicalSurface SurfaceType = UPhysicalMaterial::DetermineSurfaceType(Hitresult.PhysMaterial.Get());
+
+			UParticleSystem* SelectedEffect = nullptr;
+
+			switch (SurfaceType)
 			{
-				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), ImpactEffect, Hitresult.ImpactPoint, Hitresult.ImpactNormal.Rotation());
+			case SURFACE_FLESHDEFAULT:
+			case SURFACE_FLESHVULNERABLE:
+				SelectedEffect = FleshImpactEffect;
+				break;
+			default:
+				SelectedEffect = DefaultImpactEffect;
+				break;
 			}
+
+			if (SelectedEffect)
+			{
+				UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), SelectedEffect, Hitresult.ImpactPoint, Hitresult.ImpactNormal.Rotation());
+			}
+
 			TracerEndPoint = Hitresult.ImpactPoint;
 		}
 
@@ -85,6 +105,16 @@ void ASWeapon::PlayFireEffect(FVector TraceEnd)
 		if (TracerComp)
 		{
 			TracerComp->SetVectorParameter(TraceTargetName, TraceEnd);
+		}
+	}
+
+	APawn* MyOwner = Cast<APawn>(GetOwner());
+	if (MyOwner)
+	{
+		APlayerController* PC = Cast<APlayerController>(MyOwner->GetController());
+		if (PC)
+		{
+			PC->ClientPlayCameraShake(FireCamShake);
 		}
 	}
 }

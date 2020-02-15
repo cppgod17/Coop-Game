@@ -20,7 +20,7 @@ public:
 	ASWeapon();
 
 protected:
-
+	virtual void BeginPlay() override;
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category = "Components")
 	USkeletalMeshComponent* MeshComp = nullptr;
 
@@ -49,7 +49,24 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
 	TSubclassOf<UCameraShake> FireCamShake;
-public:	
-	UFUNCTION(BlueprintCallable, Category = "Weapon")
+
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+		float BaseDamage;
+
 	virtual void Fire();
+
+	FTimerHandle TimerHandle_TimeBeetwenShoots;
+
+	float LastFireTime;
+
+	// кол-во пуль за минуту 
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon")
+	float RateOfFire;
+
+	// получено от темпа стрельбы
+	float TimeBeetwenShots;
+public:
+	void StartFire();
+
+	void StopFire();
 };

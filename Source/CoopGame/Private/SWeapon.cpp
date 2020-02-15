@@ -8,6 +8,7 @@
 #include "Particles/ParticleSystemComponent.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "CoopGame.h"
+#include "TimerManager.h"
 
 static int32 DebugWeaponDrawing = 0;
 FAutoConsoleVariableRef CVARDebugWeaponDrawing(TEXT("COOP.DebugWeapons"),
@@ -25,9 +26,18 @@ ASWeapon::ASWeapon()
 
 	MuzzleSocketName = "MuzzleSocket";
 	TraceTargetName = "BeamEnd";
+	BaseDamage = 20.f;
+
+	RateOfFire = 600;
 }
 
+void ASWeapon::BeginPlay()
+{
+	Super::BeginPlay();
 
+	
+	TimeBeetwenShots = 60/RateOfFire;
+}
 
 void ASWeapon::Fire()
 {
@@ -54,13 +64,22 @@ void ASWeapon::Fire()
 		FVector TracerEndPoint = TraceEnd;
 
 		FHitResult Hitresult;
-		if (GetWorld()->LineTraceSingleByChannel(Hitresult, EyeLocation, TraceEnd, ECollisionChannel::ECC_Visibility, QueryParams))
+		if (GetWorld()->LineTraceSingleByChannel(Hitresult, EyeLocation, TraceEnd, COLLISION_WEAPON, QueryParams))
 		{
 			// если попали, то обрабатываем урон, функция возвращает булевое значение
 			AActor* HitActor = Hitresult.GetActor();
-			UGameplayStatics::ApplyPointDamage(HitActor, 20.0f, ShotDirection, Hitresult, MyOwner->GetInstigatorController(), this, DamageType);
 
 			EPhysicalSurface SurfaceType = UPhysicalMaterial::DetermineSurfaceType(Hitresult.PhysMaterial.Get());
+
+			float ActualDamage = BaseDamage;
+			if (SurfaceType == SURFACE_FLESHVULNERABLE)
+			{
+				ActualDamage *= 2.5f;
+			}
+
+			UGameplayStatics::ApplyPointDamage(HitActor, ActualDamage, ShotDirection, Hitresult, MyOwner->GetInstigatorController(), this, DamageType);
+
+			
 
 			UParticleSystem* SelectedEffect = nullptr;
 
@@ -88,8 +107,22 @@ void ASWeapon::Fire()
 			DrawDebugLine(GetWorld(), EyeLocation, TraceEnd, FColor::Red, false, 5.f, 0, 1.f);
 		}
 		PlayFireEffect(TracerEndPoint);
+
+		LastFireTime = GetWorld()->GetTimeSeconds();
 	}
 }
+
+void ASWeapon::StartFire()
+{
+	float FirstDelay = FMath::Max(LastFireTime + TimeBeetwenShots - GetWorld()->GetTimeSeconds(),0.0f);
+	GetWorldTimerManager().SetTimer(TimerHandle_TimeBeetwenShoots, this, &ASWeapon::Fire, TimeBeetwenShots,true,FirstDelay);
+}
+
+void ASWeapon::StopFire()
+{
+	GetWorldTimerManager().ClearTimer(TimerHandle_TimeBeetwenShoots);
+}
+
 
 void ASWeapon::PlayFireEffect(FVector TraceEnd)
 {

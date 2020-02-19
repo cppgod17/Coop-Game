@@ -10,6 +10,25 @@ class USkeletalMeshComponent;
 class UParticleSystem;
 
 
+//Содержит инфу о единичной линейной трасировке
+USTRUCT()
+struct FHitScanTrace
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY()
+	FVector_NetQuantize TraceFrom;
+
+	UPROPERTY()
+	FVector_NetQuantize TraceTo;
+
+	//Так как после 1 передачи структуры клиенты сервер не видит смысла отправлять данные клиенту т.к. структура не меняется
+	//То создается этот костыль для изменения структуры и чтобы сервер вновь отправлял клиенту данные
+	UPROPERTY()
+	uint8 BurstCounter;
+};
+
 UCLASS()
 class COOPGAME_API ASWeapon : public AActor
 {
@@ -55,6 +74,9 @@ protected:
 
 	virtual void Fire();
 
+	UFUNCTION(Server, Reliable, WithValidation)
+		void ServerFire();
+
 	FTimerHandle TimerHandle_TimeBeetwenShoots;
 
 	float LastFireTime;
@@ -65,6 +87,12 @@ protected:
 
 	// получено от темпа стрельбы
 	float TimeBeetwenShots;
+
+	UPROPERTY(ReplicatedUsing=OnRep_HitScanTrace)
+	FHitScanTrace HitScanTrace;
+
+	UFUNCTION()
+	void OnRep_HitScanTrace();
 public:
 	void StartFire();
 

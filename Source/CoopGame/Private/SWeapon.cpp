@@ -9,6 +9,7 @@
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "CoopGame.h"
 #include "TimerManager.h"
+#include "Net/UnrealNetwork.h"
 
 static int32 DebugWeaponDrawing = 0;
 FAutoConsoleVariableRef CVARDebugWeaponDrawing(TEXT("COOP.DebugWeapons"),
@@ -29,6 +30,8 @@ ASWeapon::ASWeapon()
 	BaseDamage = 20.f;
 
 	RateOfFire = 600;
+
+	SetReplicates(true);
 }
 
 void ASWeapon::BeginPlay()
@@ -42,6 +45,11 @@ void ASWeapon::BeginPlay()
 void ASWeapon::Fire()
 {
 	//Пускаем трейс от глаз игрока до локаций прицела
+	if (Role < ROLE_Authority) // тоесть если это не сервер а клиент, то мы просим вызвать функцию стрельбы на серве
+	{
+		ServerFire();
+	}
+
 	AActor* MyOwner = GetOwner();
 	if (MyOwner)
 	{
@@ -106,11 +114,37 @@ void ASWeapon::Fire()
 		{
 			DrawDebugLine(GetWorld(), EyeLocation, TraceEnd, FColor::Red, false, 5.f, 0, 1.f);
 		}
+
 		PlayFireEffect(TracerEndPoint);
+
+		if (Role == ROLE_Authority)
+		{
+			HitScanTrace.TraceTo = TracerEndPoint;
+			HitScanTrace.BurstCounter++;
+		}
 
 		LastFireTime = GetWorld()->GetTimeSeconds();
 	}
 }
+
+void ASWeapon::OnRep_HitScanTrace()
+{
+	// Играет косметический эффект
+	PlayFireEffect(HitScanTrace.TraceTo);
+	
+}
+
+
+void ASWeapon::ServerFire_Implementation()
+{
+	Fire();
+}
+
+bool ASWeapon::ServerFire_Validate()
+{
+	return true;
+}
+
 
 void ASWeapon::StartFire()
 {
@@ -152,3 +186,9 @@ void ASWeapon::PlayFireEffect(FVector TraceEnd)
 	}
 }
 
+void ASWeapon::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME_CONDITION(ASWeapon,HitScanTrace,COND_SkipOwner);
+}

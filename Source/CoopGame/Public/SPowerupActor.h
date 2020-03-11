@@ -16,8 +16,6 @@ public:
 	ASPowerupActor();
 
 protected:
-	// Called when the game starts or when spawned
-	virtual void BeginPlay() override;
 
 	//Время между тиками срабатывания усиления
 	UPROPERTY(EditDefaultsOnly,Category="Powerups")
@@ -34,12 +32,22 @@ protected:
 
 	UFUNCTION()
 	void OnTickPowerup();
-public:	
 
-	void ActivatePowerup();
+	//Хранит состояние усиления
+	UPROPERTY(ReplicatedUsing = OnRep_PowerupActive)
+	bool bIsPowerupActive;
+
+	UFUNCTION()
+	void OnRep_PowerupActive();
 
 	UFUNCTION(BlueprintImplementableEvent,Category = "Powerups")
-	void OnActivated();
+	void OnPowerupStateChange(bool bNewIsActive);
+public:	
+
+	void ActivatePowerup(AActor* ActiveFor);
+
+	UFUNCTION(BlueprintImplementableEvent,Category = "Powerups")
+	void OnActivated(AActor* ActiveFor);
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Powerups")
 	void OnPowerupTicked();

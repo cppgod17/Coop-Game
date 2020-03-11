@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+п»ї// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "SHealthComponent.h"
@@ -22,7 +22,7 @@ void USHealthComponent::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// работает только если мы сервер
+	// Р‘РёРЅРґРёРј СЌРІРµРЅС‚ РЅР° СЃРµСЂРІР°РєРµ
 	if (GetOwnerRole() == ROLE_Authority)
 	{
 		AActor* MyOwner = GetOwner();
@@ -37,7 +37,7 @@ void USHealthComponent::BeginPlay()
 void USHealthComponent::OnRep_Health(float OldHealth)
 {
 	float Damage = Health - OldHealth;
-	//Чтобы вызывалось на клиенте а не токо на сервере
+	//Р’С‹РїРѕР»РЅСЏРµС‚СЃСЏ РїРµСЂРµРґР°РµРј РІ Р±Рї
 	OnHealthChanged.Broadcast(this, Health,Damage, nullptr, nullptr, nullptr);
 }
 
@@ -50,6 +50,18 @@ void USHealthComponent::HandleTakeAnyDamage(AActor* DamagedActor, float Damage, 
 	UE_LOG(LogTemp, Log, TEXT("Health Changed: %s"), *FString::SanitizeFloat(Health))
 
 	OnHealthChanged.Broadcast(this, Health, Damage, DamageType, InstigatedBy, DamageCauser);
+}
+
+void USHealthComponent::Heal(float HealAmount)
+{
+	if (HealAmount <= 0.f || Health >= 100.f || Health <=0.f)
+	{
+		return;
+	}
+	Health = FMath::Clamp(Health + HealAmount, 0.f, DefaultHealth);
+	OnHealthChanged.Broadcast(this, Health, -HealAmount, nullptr, nullptr, nullptr);
+
+	UE_LOG(LogTemp, Log, TEXT("Health: %s Healed: %s"), *FString::SanitizeFloat(Health), *FString::SanitizeFloat(HealAmount))
 }
 
 void USHealthComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

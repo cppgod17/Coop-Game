@@ -114,7 +114,7 @@ void ASCharacter::OnHealthChanged(USHealthComponent* OwningHealthComp, float Hea
 	class AController* InstigatedBy, AActor* DamageCauser)
 {
 	if (Health <= 0.f && !bDied)
-	{
+	{		
 		bDied = true;
 		GetMovementComponent()->StopMovementImmediately();
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);

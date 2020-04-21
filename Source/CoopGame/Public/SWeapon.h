@@ -90,6 +90,11 @@ protected:
 	// получено от темпа стрельбы
 	float TimeBeetwenShots;
 
+
+	//разброс пуль в градусах
+	UPROPERTY(EditDefaultsOnly, Category = "Weapon", meta = (ClampMin=0.f))
+	float BulletSpreed;
+
 	UPROPERTY(ReplicatedUsing=OnRep_HitScanTrace)
 	FHitScanTrace HitScanTrace;
 

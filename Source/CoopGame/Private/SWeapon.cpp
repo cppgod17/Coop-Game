@@ -28,7 +28,7 @@ ASWeapon::ASWeapon()
 	MuzzleSocketName = "MuzzleSocket";
 	TraceTargetName = "BeamEnd";
 	BaseDamage = 20.f;
-
+	BulletSpreed = 10.f;
 	RateOfFire = 600;
 
 	SetReplicates(true);
@@ -62,6 +62,10 @@ void ASWeapon::Fire()
 		MyOwner->GetActorEyesViewPoint(EyeLocation, EyeRotation);
 
 		FVector ShotDirection = EyeRotation.Vector();
+
+		//переводим градусы в радианы чтобы передать нужное кол-во градусов в функцию разброса
+		float HalfRad = FMath::DegreesToRadians(BulletSpreed);
+		ShotDirection = FMath::VRandCone(ShotDirection, HalfRad, HalfRad);
 
 		// определения локации точки конца трейса
 		FVector TraceEnd = EyeLocation + (ShotDirection * 10000);

@@ -120,7 +120,7 @@ void ASCharacter::OnHealthChanged(USHealthComponent* OwningHealthComp, float Hea
 		GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 		DetachFromControllerPendingDestroy();
-
+		CurrentWeapon->SetLifeSpan(10.f);
 		SetLifeSpan(10.f);
 	}
 }
